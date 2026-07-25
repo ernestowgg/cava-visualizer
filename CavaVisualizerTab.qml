@@ -17,6 +17,27 @@ DesktopPluginComponent {
     readonly property int    barWidth:      pluginData.barWidth       ?? 0       // 0 = auto
     readonly property int    curveLineWidth: pluginData.curveLineWidth ?? 2
     readonly property int    sensitivity:   pluginData.sensitivity    ?? 100
+    // "auto" uses cava's built-in autosens, which continuously adjusts gain
+    // to use the full range without clipping - no manual tuning needed, and
+    // it adapts per-song/per-volume. "manual" uses the fixed Sensitivity
+    // slider above instead, and is left off by default since it's the more
+    // fragile option (a level that's safe for one song will clip on another).
+    readonly property bool   autoSensitivity: (pluginData.autoSensitivity ?? "auto") === "auto"
+    // Cava's own temporal smoothing (its "noise_reduction" setting, 0-100).
+    // Lower = raw/jumpy and reacts instantly to transients; higher = smoother
+    // but blurs fast peaks together. Cava's own default is 77.
+    readonly property int    noiseReduction: pluginData.noiseReduction ?? 77
+    // Multiplier for how fast bars visually animate towards new values.
+    // This is independent of cava's smoothing above - it controls the on-screen
+    // interpolation, so even a low noiseReduction can still look "soft" if this
+    // is too low. Matches the previous hardcoded behaviour at 4.
+    readonly property real   animationSpeed: pluginData.animationSpeed ?? 4
+    // How many times per second cava re-runs its analysis. Cava's own default
+    // is 60; higher values give more frequent, genuinely fresh updates (useful
+    // on high refresh-rate monitors) at the cost of a bit more CPU. Returns
+    // diminish once this exceeds your audio server's buffer rate (~50-100fps
+    // is typical for PulseAudio/PipeWire), but there's no hard ceiling.
+    readonly property int    framerate:     pluginData.framerate      ?? 60
     readonly property string channels:      pluginData.channels       ?? "mono"  // "mono" | "stereo"
     readonly property string orientation:   pluginData.orientation    ?? "bottom"
     readonly property real   bgOpacity:     (pluginData.bgOpacity     ?? 0) / 100
@@ -118,14 +139,18 @@ DesktopPluginComponent {
             "bash", "-c",
             "mkdir -p /tmp/.dankshell && cat > /tmp/.dankshell/cava-widget.cfg << 'CAVAEOF'\n" +
             "[general]\n" +
-            "bars = "        + root.effectiveBars + "\n" +
-            "framerate = 60\n" +
-            "sensitivity = " + root.sensitivity   + "\n" +
-            "channels = "    + root.channels      + "\n" +
+            "bars = "            + root.effectiveBars                 + "\n" +
+            "framerate = "       + root.framerate                     + "\n" +
+            "sensitivity = "     + root.sensitivity                   + "\n" +
+            "autosens = "        + (root.autoSensitivity ? "1" : "0") + "\n" +
+            "channels = "        + root.channels                      + "\n" +
+            "\n" +
+            "[smoothing]\n" +
+            "noise_reduction = " + root.noiseReduction                + "\n" +
             "\n" +
             "[output]\n" +
             "method = raw\n" +
-            "channels = "    + root.channels      + "\n" +
+            "channels = "        + root.channels                      + "\n" +
             "raw_target = /dev/stdout\n" +
             "data_format = ascii\n" +
             "ascii_max_range = 1000\n" +
@@ -179,6 +204,9 @@ DesktopPluginComponent {
     Component.onCompleted:      rebuildConfig()
     onEffectiveBarsChanged:     rebuildConfig()
     onSensitivityChanged:       rebuildConfig()
+    onAutoSensitivityChanged:   rebuildConfig()
+    onNoiseReductionChanged:    rebuildConfig()
+    onFramerateChanged:         rebuildConfig()
     onChannelsChanged:          rebuildConfig()
     // Switching mode may change effectiveBars, but also forces a repaint.
     onVizModeChanged:           rebuildConfig()
@@ -232,7 +260,7 @@ DesktopPluginComponent {
                           : root.orientation === "horizontal" ? vis.height / 2 - height / 2
                           :                                     0
 
-                    Behavior on height { SmoothedAnimation { velocity: vis.height * 4 } }
+                    Behavior on height { SmoothedAnimation { velocity: vis.height * root.animationSpeed } }
 
                     radius: 2
                     color: Qt.rgba(root.barColor.r, root.barColor.g, root.barColor.b,
@@ -281,7 +309,7 @@ DesktopPluginComponent {
                           : root.orientation === "vertical" ? vis.width / 2 - width / 2
                           :                                   0
 
-                    Behavior on width { SmoothedAnimation { velocity: vis.width * 4 } }
+                    Behavior on width { SmoothedAnimation { velocity: vis.width * root.animationSpeed } }
 
                     radius: 2
                     color: Qt.rgba(root.barColor.r, root.barColor.g, root.barColor.b,
