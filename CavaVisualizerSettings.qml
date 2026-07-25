@@ -103,13 +103,56 @@ PluginSettings {
     // Audio
     // ---------------------------------------------------------------
 
+    SelectionSetting {
+        id: sensitivityModeSetting
+        settingKey:   "autoSensitivity"
+        label:        I18n.tr("Sensitivity Mode")
+        description:  I18n.tr("Automatic continuously adjusts gain to use the full bar height without clipping, adapting to whatever is currently playing. Manual uses a fixed level you set yourself, which may clip on louder songs.")
+        defaultValue: "auto"
+        options: [
+            { label: I18n.tr("Automatic"), value: "auto"   },
+            { label: I18n.tr("Manual"),    value: "manual" }
+        ]
+    }
+
     SliderSetting {
+        visible:      sensitivityModeSetting.value === "manual"
         settingKey:   "sensitivity"
         label:        I18n.tr("Sensitivity")
         defaultValue: 100
         minimum:      10
         maximum:      300
         unit:         "%"
+    }
+
+    SliderSetting {
+        settingKey:   "framerate"
+        label:        I18n.tr("Framerate")
+        description:  I18n.tr("How often cava re-analyses the audio, per second. Higher values are more responsive on high refresh-rate displays but use a bit more CPU; returns diminish above ~100.")
+        defaultValue: 60
+        minimum:      30
+        maximum:      240
+        unit:         "fps"
+    }
+
+    SliderSetting {
+        settingKey:   "noiseReduction"
+        label:        I18n.tr("Smoothing")
+        description:  I18n.tr("Cava's own temporal smoothing. Lower values react faster to short transients but look jumpier; higher values look smoother but blur fast peaks together.")
+        defaultValue: 77
+        minimum:      0
+        maximum:      100
+        unit:         "%"
+    }
+
+    SliderSetting {
+        visible:      vizModeSetting.value === "bars"
+        settingKey:   "animationSpeed"
+        label:        I18n.tr("Bar Animation Speed")
+        description:  I18n.tr("How quickly bars visually snap to new values. Higher is snappier; curve modes are always instant.")
+        defaultValue: 4
+        minimum:      1
+        maximum:      20
     }
 
     SelectionSetting {
