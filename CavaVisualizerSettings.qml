@@ -145,14 +145,27 @@ PluginSettings {
         unit:         "%"
     }
 
-    SliderSetting {
+    SelectionSetting {
+        id: animationModeSetting
         visible:      vizModeSetting.value === "bars"
+        settingKey:   "animationMode"
+        label:        I18n.tr("Bar Animation")
+        description:  I18n.tr("Instant snaps bars straight to each new value with no easing at all, identical in behaviour to how curve modes already work. Smooth eases between values at the speed set below.")
+        defaultValue: "smooth"
+        options: [
+            { label: I18n.tr("Smooth"),  value: "smooth"  },
+            { label: I18n.tr("Instant"), value: "instant" }
+        ]
+    }
+
+    SliderSetting {
+        visible:      vizModeSetting.value === "bars" && animationModeSetting.value === "smooth"
         settingKey:   "animationSpeed"
         label:        I18n.tr("Bar Animation Speed")
         description:  I18n.tr("How quickly bars visually snap to new values. Higher is snappier; curve modes are always instant.")
         defaultValue: 4
         minimum:      1
-        maximum:      20
+        maximum:      200
     }
 
     SelectionSetting {
