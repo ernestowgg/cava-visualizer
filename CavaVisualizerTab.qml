@@ -32,6 +32,10 @@ DesktopPluginComponent {
     // interpolation, so even a low noiseReduction can still look "soft" if this
     // is too low. Matches the previous hardcoded behaviour at 4.
     readonly property real   animationSpeed: pluginData.animationSpeed ?? 4
+    // When true, bars skip the Behavior/SmoothedAnimation entirely and snap
+    // straight to each new value - the same "always instant" approach curve
+    // mode already uses. animationSpeed is irrelevant in this mode.
+    readonly property bool   instantBars:    (pluginData.animationMode ?? "smooth") === "instant"
     // How many times per second cava re-runs its analysis. Cava's own default
     // is 60; higher values give more frequent, genuinely fresh updates (useful
     // on high refresh-rate monitors) at the cost of a bit more CPU. Returns
@@ -260,7 +264,7 @@ DesktopPluginComponent {
                           : root.orientation === "horizontal" ? vis.height / 2 - height / 2
                           :                                     0
 
-                    Behavior on height { SmoothedAnimation { velocity: vis.height * root.animationSpeed } }
+                    Behavior on height { enabled: !root.instantBars; SmoothedAnimation { velocity: vis.height * root.animationSpeed } }
 
                     radius: 2
                     color: Qt.rgba(root.barColor.r, root.barColor.g, root.barColor.b,
@@ -309,7 +313,7 @@ DesktopPluginComponent {
                           : root.orientation === "vertical" ? vis.width / 2 - width / 2
                           :                                   0
 
-                    Behavior on width { SmoothedAnimation { velocity: vis.width * root.animationSpeed } }
+                    Behavior on width { enabled: !root.instantBars; SmoothedAnimation { velocity: vis.width * root.animationSpeed } }
 
                     radius: 2
                     color: Qt.rgba(root.barColor.r, root.barColor.g, root.barColor.b,
