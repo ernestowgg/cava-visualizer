@@ -165,7 +165,7 @@ PluginSettings {
         description:  I18n.tr("How quickly bars visually snap to new values. Higher is snappier; curve modes are always instant.")
         defaultValue: 4
         minimum:      1
-        maximum:      200
+        maximum:      10
     }
 
     SelectionSetting {
